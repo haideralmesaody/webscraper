@@ -1,0 +1,116 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    padding: 15px 20px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.ticker-selector {
+    min-width: 200px;
+}
+
+#tickerSelect {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: white;
+}
+
+.company-info {
+    flex-grow: 1;
+}
+
+.company-info h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+#priceChart {
+    flex-grow: 1;
+    min-height: 0;
+    background: white;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: opacity 0.3s ease;
+}
+
+.description-panel {
+    background: white;
+    margin: 0 20px 20px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.panel-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.panel-content {
+    padding: 20px;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* Highcharts custom styling */
+.highcharts-stocktools-wrapper {
+    left: 0 !important;
+    right: auto !important;
+    top: 0;
+}
+
+.highcharts-popup {
+    background-color: white;
+    border: 1px solid #999;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.highcharts-popup input, 
+.highcharts-popup button {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 6px 12px;
+}
+
+/* Remove custom candlestick colors to use defaults */
+.highcharts-candlestick-up,
+.highcharts-candlestick-down {
+    fill: inherit;
+    stroke: inherit;
+} 
+
+.error-message {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    display: none;
+} 
