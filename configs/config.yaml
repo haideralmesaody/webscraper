@@ -4,7 +4,13 @@ scraper:
   timeout: 60     # Overall operation timeout
   retries: 3      # Number of retry attempts
   delay: 1        # Delay between operations
-  maxPages: 2     # Maximum pages to scrape
+  maxPages: 20     # Maximum pages to scrape
+  waits:
+    betweenTickers: 1    # Between processing tickers
+    afterError: 1        # After any error
+    afterRefresh: 1      # After browser refresh
+    tableLoad: 1         # Wait for table to load
+    browserClose: 1      # Wait during browser close
   browser:
     headless: false
     debug: true

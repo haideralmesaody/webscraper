@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 	"webscraper/internal/utils"
 
@@ -24,6 +25,8 @@ type StockData struct {
 	Volume      string
 	TotalShares string
 	NumTrades   string
+	Change      float64
+	ChangePerc  float64
 }
 
 type Scraper struct {
@@ -45,8 +48,15 @@ func NewScraper(logger *utils.Logger, ctx context.Context, cancel context.Cancel
 }
 
 func (s *Scraper) GetStockData(ticker string) ([]StockData, error) {
+	// Try to load existing data
+	existingData, err := s.loadExistingData(ticker)
+	if err != nil {
+		s.logger.Debug("Error loading existing data: %v", err)
+		// Continue with full scrape if there's an error
+	}
+
 	// Disable image loading before navigation
-	err := chromedp.Run(s.ctx,
+	err = chromedp.Run(s.ctx,
 		network.Enable(),
 		emulation.SetCPUThrottlingRate(1),
 		network.SetExtraHTTPHeaders(map[string]interface{}{
@@ -118,10 +128,12 @@ func (s *Scraper) GetStockData(ticker string) ([]StockData, error) {
 	var allStockData []StockData
 	currentPage := 1
 	maxPages := s.config.Scraper.MaxPages
+	foundOverlap := false
+	previousPageCount := 0 // Track previous page record count
 
 	fmt.Printf("Starting data extraction, will process %d pages\n", maxPages)
 
-	for currentPage <= maxPages {
+	for currentPage <= maxPages && !foundOverlap {
 		// Extract data from current page
 		var pageData []StockData
 		err = chromedp.Run(s.ctx,
@@ -150,8 +162,46 @@ func (s *Scraper) GetStockData(ticker string) ([]StockData, error) {
 			return nil, fmt.Errorf("failed to extract data from page %d: %v", currentPage, err)
 		}
 
+		// Check if we've reached the end of data
+		if len(pageData) == 0 {
+			s.logger.Debug("No more data found on page %d, stopping extraction", currentPage)
+			break
+		}
+
+		// Check if we got fewer records than the previous page (last page usually has fewer records)
+		if previousPageCount > 0 && len(pageData) < previousPageCount {
+			s.logger.Debug("Found last page with %d records (previous had %d)", len(pageData), previousPageCount)
+		}
+		previousPageCount = len(pageData)
+
 		fmt.Printf("Successfully extracted %d records from page %d\n", len(pageData), currentPage)
+
+		if len(existingData) > 0 {
+			foundOverlap = s.findOverlap(existingData, pageData)
+			if foundOverlap {
+				s.logger.Debug("Found overlap with existing data on page %d", currentPage)
+				// Only keep new data (before overlap)
+				for i, record := range pageData {
+					if record.Date == existingData[0].Date {
+						pageData = pageData[:i]
+						break
+					}
+				}
+			}
+		}
+
 		allStockData = append(allStockData, pageData...)
+
+		if foundOverlap {
+			s.logger.Info("Found overlap with existing data, stopping extraction")
+			break
+		}
+
+		// Check if we've reached the end of data
+		if len(pageData) < 25 { // Assuming 25 is the standard page size
+			s.logger.Debug("Reached last page (incomplete page), stopping extraction")
+			break
+		}
 
 		if currentPage >= maxPages {
 			break
@@ -178,6 +228,14 @@ func (s *Scraper) GetStockData(ticker string) ([]StockData, error) {
 		time.Sleep(time.Duration(s.config.Scraper.Delay) * time.Second)
 		currentPage++
 	}
+
+	// Append existing data if we have any
+	if len(existingData) > 0 {
+		allStockData = append(allStockData, existingData...)
+	}
+
+	// Calculate changes for all data
+	allStockData = s.calculatePriceChanges(allStockData)
 
 	return allStockData, nil
 }
@@ -206,12 +264,12 @@ func (s *Scraper) SaveToCSV(ticker string, data []StockData) error {
 	defer writer.Flush()
 
 	// Write header with new column
-	headers := []string{"Date", "Open", "High", "Low", "Close", "Volume", "T.Shares", "Trades"}
+	headers := []string{"Date", "Open", "High", "Low", "Close", "Change", "Change%", "Volume", "T.Shares", "Trades"}
 	if err := writer.Write(headers); err != nil {
 		return fmt.Errorf("failed to write headers: %v", err)
 	}
 
-	// Write data including T.Shares
+	// Write data including new fields
 	for _, record := range data {
 		row := []string{
 			record.Date,
@@ -219,6 +277,8 @@ func (s *Scraper) SaveToCSV(ticker string, data []StockData) error {
 			record.HighPrice,
 			record.LowPrice,
 			record.ClosePrice,
+			fmt.Sprintf("%.3f", record.Change),       // Change
+			fmt.Sprintf("%.2f%%", record.ChangePerc), // Change%
 			record.Volume,
 			record.TotalShares,
 			record.NumTrades,
@@ -380,7 +440,7 @@ func processTickerList(s *Scraper, logger *utils.Logger, tickers []string) error
 			logger.Debug("Performing browser refresh")
 			if err := s.refreshBrowser(); err != nil {
 				logger.Error("Failed to refresh browser: %v", err)
-				time.Sleep(30 * time.Second) // Wait longer before next attempt
+				time.Sleep(30 * time.Second) // Hard-coded 30 second wait
 				continue
 			}
 		}
@@ -411,4 +471,91 @@ func processTickerList(s *Scraper, logger *utils.Logger, tickers []string) error
 
 	logger.Info("Completed processing %d tickers", totalTickers)
 	return nil
+}
+
+// Add calculation function
+func (s *Scraper) calculatePriceChanges(data []StockData) []StockData {
+	if len(data) < 2 {
+		return data
+	}
+
+	// Process each day's data starting from most recent (data is in reverse chronological order)
+	for i := 0; i < len(data)-1; i++ {
+		currentClose, err := strconv.ParseFloat(data[i].ClosePrice, 64)
+		if err != nil {
+			s.logger.Debug("Error parsing current close price: %v", err)
+			continue
+		}
+
+		previousClose, err := strconv.ParseFloat(data[i+1].ClosePrice, 64)
+		if err != nil {
+			s.logger.Debug("Error parsing previous close price: %v", err)
+			continue
+		}
+
+		// Calculate change and change percentage
+		data[i].Change = currentClose - previousClose
+		if previousClose != 0 {
+			data[i].ChangePerc = (data[i].Change / previousClose) * 100
+		}
+	}
+
+	return data
+}
+
+// Add function to load existing data
+func (s *Scraper) loadExistingData(ticker string) ([]StockData, error) {
+	filename := fmt.Sprintf("output/%s_data.csv", ticker)
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return nil, nil // File doesn't exist
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	// Skip header
+	if _, err := reader.Read(); err != nil {
+		return nil, err
+	}
+
+	var data []StockData
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range records {
+		data = append(data, StockData{
+			Date:        record[0],
+			OpenPrice:   record[1],
+			HighPrice:   record[2],
+			LowPrice:    record[3],
+			ClosePrice:  record[4],
+			Volume:      record[7],
+			TotalShares: record[8],
+			NumTrades:   record[9],
+		})
+	}
+
+	return data, nil
+}
+
+// Add function to check for data overlap
+func (s *Scraper) findOverlap(existingData []StockData, newData []StockData) bool {
+	if len(existingData) == 0 || len(newData) == 0 {
+		return false
+	}
+
+	// Compare the most recent date in existing data with the dates in new data
+	mostRecentExisting := existingData[0].Date
+	for _, record := range newData {
+		if record.Date == mostRecentExisting {
+			return true
+		}
+	}
+	return false
 }
