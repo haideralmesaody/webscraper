@@ -1,0 +1,36 @@
+# Output and temporary files
+output/
+logs/
+temp_builds/
+**/debug_*
+**/screenshot_*
+
+# Version control
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+
+# Development and test files
+test/
+**/*_test.go
+.vscode/
+.idea/
+
+# Data files
+*.csv
+!configs/*.csv
+
+# Build artifacts
+bin/
+dist/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+*.env 

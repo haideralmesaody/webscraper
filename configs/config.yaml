@@ -1,0 +1,10 @@
+# Scraper configuration
+
+scraper:
+  timeout: 60     # Overall operation timeout
+  retries: 3      # Number of retry attempts
+  delay: 1        # Delay between operations
+  maxPages: 2     # Maximum pages to scrape
+  browser:
+    headless: false
+    debug: true

@@ -1,0 +1,24 @@
+
+Table 0:
+ID: 
+Class: 
+Rows: 1
+Headers: 
+First row cells: Ahli 0.90  1.10% | Aissm 1.83  1.08% | Alaab 7.00  0.00% | Ameeco 2.45  2.00% | Ameen 0.75  6.25% | Ampy 1.96  0.51% | Aoset 0.08  0.00% | Aqaar 5.50  0.55% | Ashur 0.30  0.00% | Athathim 1.40  0.00% | Athmar 0.35  25.00% | Babel 102.00  7.27% | Baghdad 4.23  0.71% | Bagtel 12.00  9.09% | Bithor 8.50  2.04% | BLAD 0.09  0.00% | BMAL 1.00  0.00% | BTIB 0.90  10.00% | BTRI 0.92  1.08% | BTRU 0.75  0.00% | capital 3.73  1.36% | Credit 0.85  0.00% | Dasalamm 0.76  1.33% | Eqtisaad 0.26  0.00% | Fkashy 3.25  1.52% | Ishtar 10.00  0.00% | Islam 1.49  1.36% | Karbala 0.75  7.41% | Khaleeg 0.45  7.14% | Khazer 2.25  10.00% | Kindfit 3.00  0.00% | Kurd 0.90  0.00% | Lohom 6.10  0.00% | Mndwa 2.49  2.47% | Mousil 0.16  0.00% | Pepsi 4.17  0.48% | shmax 4.30  2.38% | Sumer 0.09  0.00% | TASC 12.19  0.74% | Tomoor 3.60  9.55% | ZAIN 2.40  0.00% |
+------------------------
+
+Table 1:
+ID: 
+Class: 
+Rows: 1
+Headers: 
+First row cells: The last trading session of 2024 and the first trading session of 2025   |  Iraq Stock Exchange will not organize trading sessions of Wednesday& Thursday Nov.20.21 because it`s General Population Census holiday  |  REP - 4-2024 Servers for (Trading vi Internet)  |  Iraq Stock Exchange will not organize trading sessions of Thursday Oct.10.24 on the occasion of Iraqi Independence Day  |  A special order on International Islamic Bank shares on Sunday, 9/1/2024  |  Iraq Stock Exchange will not organize trading sessions from Wednesday May.1.24  because of Labour Day Holiday  |  Iraq Stock Exchange will not organize trading sessions from Tuesday April.9.24 until Satruday April.13.24 because of Eid Al-Fitr Holiday  |
+------------------------
+
+Table 2:
+ID: dispTable
+Class: table-allcontent
+Rows: 26
+Headers: No. Trades, Volume, T. Shares, Change %, Change, Low, High, Open, Close, Date
+First row cells: 73, 236,151,248, 55,940,181, 0.71%, 0.03, 4.20, 4.24, 4.23, 4.23, 23/12/2024
+------------------------
