@@ -45,6 +45,28 @@ func NewScraper(logger *utils.Logger, ctx context.Context, cancel context.Cancel
 }
 
 func (s *Scraper) GetStockData(ticker string) ([]StockData, error) {
+	// Disable image loading before navigation
+	err := chromedp.Run(s.ctx,
+		network.Enable(),
+		emulation.SetCPUThrottlingRate(1),
+		network.SetExtraHTTPHeaders(map[string]interface{}{
+			"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+		}),
+		network.SetBlockedURLS([]string{
+			"*.png",
+			"*.jpg",
+			"*.jpeg",
+			"*.gif",
+			"*.webp",
+			"*.svg",
+			"*.ico",
+		}),
+	)
+	if err != nil {
+		s.logger.Debug("Failed to set image blocking: %v", err)
+		// Continue anyway as this is not critical
+	}
+
 	url := fmt.Sprintf("http://www.isx-iq.net/isxportal/portal/companyprofilecontainer.html?currLanguage=en&companyCode=%s%%20&activeTab=0", ticker)
 	fmt.Printf("Starting data extraction for ticker: %s\n", ticker)
 
@@ -63,7 +85,7 @@ func (s *Scraper) GetStockData(ticker string) ([]StockData, error) {
 	})
 
 	// Navigate to the page
-	err := chromedp.Run(s.ctx,
+	err = chromedp.Run(s.ctx,
 		chromedp.Navigate(url),
 		chromedp.WaitReady("body"),
 	)
